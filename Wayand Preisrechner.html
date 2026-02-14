@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wayand Preisrechner</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #fff3e6, #ffffff);
+}
+
+.header {
+  background: linear-gradient(90deg, #ff7a00, #ff9d3f);
+  color: white;
+  padding: 25px;
+  text-align: center;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  animation: fadeInUp 0.8s ease-in-out;
+}
+
+.room {
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+button {
+  background: #ff7a00;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+button:hover {
+  background: #e56700;
+}
+
+.total {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+.small {
+  font-size: 12px;
+  color: #555;
+  margin-top: 15px;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0}
+  to {opacity: 1}
+}
+
+@keyframes fadeInUp {
+  from {opacity: 0; transform: translateY(20px)}
+  to {opacity: 1; transform: translateY(0)}
+}
+
+@media (max-width: 600px) {
+  .container { padding: 12px; }
+  button { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Wayand Online-Preisrechner</h1>
+  <p>Hier können Sie schnell und unverbindlich eine Kostenschätzung berechnen.</p>
+</div>
+
+<div class="container">
+
+<div id="rooms"></div>
+
+<button onclick="addRoom()">+ Raum hinzufügen</button>
+<button onclick="calculateTotal()">Preis berechnen</button>
+<button onclick="downloadPDF()">Als PDF speichern</button>
+
+<div class="total" id="total">Gesamtpreis: 0,00 €*</div>
+<div id="vat"></div>
+
+<div class="small">
+* Der ermittelte Preis beinhaltet Material- und Arbeitskosten und dient ausschließlich zur allgemeinen Orientierung. Er ersetzt keine individuelle Beratung oder Vor-Ort-Besichtigung. Trotz sorgfältiger Berechnung kann keine Gewähr für die Richtigkeit übernommen werden. Endpreise können je nach Objektbedingungen abweichen.</div>
+
+</div>
+
+<script>
+let roomCount = 0;
+
+const services = {
+  "Dispersionsfarbe normal": 7.90,
+  "Latexfarbe hochwertig": 12.99,
+  "Qualitätsspachtelung": 11.90,
+  "Hochwertige Spachteltechnik": 29.90,
+  "Raufaser tapezieren": 14.90
+};
+
+function addRoom() {
+  roomCount++;
+  const roomDiv = document.createElement("div");
+  roomDiv.className = "room";
+  roomDiv.id = "room" + roomCount;
+
+  let options = "";
+  for (let key in services) {
+    options += `<option value="${key}">${key}</option>`;
+  }
+
+  roomDiv.innerHTML = `
+    <h3>Raum ${roomCount}</h3>
+    Quadratmeter: <input type="number" min="1" id="sqm${roomCount}"><br><br>
+    Leistung: <select id="service${roomCount}">${options}</select><br>
+    <button onclick="removeRoom(${roomCount})">Raum löschen</button>
+  `;
+
+  document.getElementById("rooms").appendChild(roomDiv);
+}
+
+function removeRoom(id) {
+  const room = document.getElementById("room" + id);
+  if (room) room.remove();
+}
+
+function calculateTotal() {
+  let total = 0;
+
+  for (let i = 1; i <= roomCount; i++) {
+    const sqm = document.getElementById("sqm" + i);
+    const service = document.getElementById("service" + i);
+
+    if (!sqm || !service) continue;
+
+    const area = parseFloat(sqm.value);
+    if (isNaN(area) || area <= 0) continue;
+
+    let price = services[service.value] * area;
+
+    if (area >= 10) price += 10; // Abklebekosten
+
+    total += price;
+  }
+
+  if (total < 150 && total > 0) total = 150; // Mindestauftrag
+
+  const vat = total * 0.19;
+  const net = total - vat;
+
+  document.getElementById("total").innerText =
+    "Gesamtpreis: " + total.toFixed(2) + " €*";
+
+  document.getElementById("vat").innerText =
+    `Enthaltene MwSt. (19%): ${vat.toFixed(2)} € | Netto: ${net.toFixed(2)} €`;
+}
+
+function downloadPDF() {
+  window.print();
+}
+
+addRoom();
+</script>
+
+</body>
+</html>
